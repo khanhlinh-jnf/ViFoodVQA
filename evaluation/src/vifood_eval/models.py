@@ -81,12 +81,10 @@ class OpenAICompatibleModel(VisionModel):
         return response.choices[0].message.content or ""
 
 
-class HFVisionModel(VisionModel):
     def __init__(self, cfg: dict[str, Any]) -> None:
         try:
             import torch
             from transformers import AutoConfig, AutoModelForCausalLM, AutoProcessor
-            from transformers import BitsAndBytesConfig
             try:
                 from transformers import AutoModelForImageTextToText
             except ImportError:
@@ -124,18 +122,26 @@ class HFVisionModel(VisionModel):
             _force_attention_implementation(model_config, cfg.get("attn_implementation"))
             _force_use_cache(model_config, self.use_cache)
             
-        quantization_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16, # An toàn hơn cho T4
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_use_double_quant=True,
-        )
+        # --- BẮT ĐẦU PHẦN TỐI ƯU VRAM CỦA BẠN ---
+        try:
+            from transformers import BitsAndBytesConfig
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.float16, # An toàn hơn cho T4
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_use_double_quant=True,
+            )
+        except ImportError:
+            raise RuntimeError("Lỗi: Bạn chưa cài bitsandbytes! Chạy lệnh này trên Kaggle trước: !pip install bitsandbytes accelerate")
+
         model_kwargs = {
             "device_map": cfg.get("device_map", "auto"),
             "trust_remote_code": trust_remote_code,
             "attn_implementation": "flash_attention_2", 
             "quantization_config": quantization_config, 
         }
+        # --- KẾT THÚC PHẦN TỐI ƯU VRAM ---
+
         if model_config is not None:
             model_kwargs["config"] = model_config
         if "attn_implementation" in cfg:
@@ -167,7 +173,7 @@ class HFVisionModel(VisionModel):
             raise ValueError(f"Unsupported Hugging Face auto_model: {auto_model}")
         _force_use_cache(getattr(self.model, "config", None), self.use_cache)
         self.model.eval()
-
+    
     def generate(
         self,
         messages: list[dict[str, Any]],
