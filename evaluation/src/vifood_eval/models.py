@@ -123,7 +123,13 @@ class HFVisionModel(VisionModel):
             )
             _force_attention_implementation(model_config, cfg.get("attn_implementation"))
             _force_use_cache(model_config, self.use_cache)
-
+            
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.float16, # An toàn hơn cho T4
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        )
         model_kwargs = {
             "device_map": cfg.get("device_map", "auto"),
             "trust_remote_code": trust_remote_code,
