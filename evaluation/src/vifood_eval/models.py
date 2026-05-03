@@ -86,6 +86,7 @@ class HFVisionModel(VisionModel):
         try:
             import torch
             from transformers import AutoConfig, AutoModelForCausalLM, AutoProcessor
+            from transformers import BitsAndBytesConfig
             try:
                 from transformers import AutoModelForImageTextToText
             except ImportError:
@@ -126,6 +127,8 @@ class HFVisionModel(VisionModel):
         model_kwargs = {
             "device_map": cfg.get("device_map", "auto"),
             "trust_remote_code": trust_remote_code,
+            "attn_implementation": "flash_attention_2", 
+            "quantization_config": quantization_config, 
         }
         if model_config is not None:
             model_kwargs["config"] = model_config
