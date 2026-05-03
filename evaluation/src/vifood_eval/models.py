@@ -137,7 +137,7 @@ class HFVisionModel(VisionModel):
         model_kwargs = {
             "device_map": cfg.get("device_map", "auto"),
             "trust_remote_code": trust_remote_code,
-            "attn_implementation": "flash_attention_2", 
+            "attn_implementation": "eager", 
             "quantization_config": quantization_config, 
         }
         # --- KẾT THÚC PHẦN TỐI ƯU VRAM ---
