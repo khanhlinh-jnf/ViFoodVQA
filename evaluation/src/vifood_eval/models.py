@@ -80,7 +80,7 @@ class OpenAICompatibleModel(VisionModel):
             response = self.client.chat.completions.create(**request)
         return response.choices[0].message.content or ""
 
-
+class HFVisionModel(VisionModel):
     def __init__(self, cfg: dict[str, Any]) -> None:
         try:
             import torch
